@@ -1,0 +1,11 @@
+<launch>
+    <arg name="input_topic" />
+    <node
+      pkg="audio"
+      name="$(anon play)"
+      type="play.py"
+      output="screen"
+      >
+        <param    name="input_topic" value="$(arg input_topic)" />
+    </node>
+</launch>

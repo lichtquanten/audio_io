@@ -1,0 +1,20 @@
+<package format="2">
+  <name>audio_io_msgs</name>
+  <version>2.0.0</version>
+  <description>
+    Messages for transmitting audio
+  </description>
+  <license>MIT</license>
+
+  <maintainer email="seanhackett55@gmail.com">Sean Hackett</maintainer>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>message_generation</build_depend>
+  <build_depend>std_msgs</build_depend>
+
+  <exec_depend>message_runtime</exec_depend>
+
+  <export>
+  </export>
+</package>

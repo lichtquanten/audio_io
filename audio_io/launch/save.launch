@@ -1,0 +1,13 @@
+<launch>
+  <arg name="input_topic" />
+  <arg name="output_path" />
+  <node
+      pkg="audio"
+      name="$(anon save)"
+      type="save.py"
+      output="screen"
+      >
+        <param    name="input_topic" value="$(arg input_topic)" />
+        <param    name="output_path" value="$(arg output_path)" />
+    </node>
+</launch>
