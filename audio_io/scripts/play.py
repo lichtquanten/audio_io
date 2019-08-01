@@ -5,7 +5,8 @@ import pyaudio
 import rospy
 from rospywrapper import TopicSource
 import sys
-from audio.msg import AudioData
+
+from audio_io_msgs.msg import AudioData
 
 def main():
     p = pyaudio.PyAudio()
@@ -16,7 +17,10 @@ def main():
 
     with source:
         current_config = None
+        stream = None
         for msg, t in source:
+            if rospy.is_shutdown():
+                break
             # Get the latest configuration
             msg_config = {
                 'width': msg.sample_width,
@@ -37,6 +41,7 @@ def main():
                     format=p.get_format_from_width(msg.sample_width),
                     channels=msg.num_channels,
                     rate=msg.sample_rate,
+                    input=False,
                     output=True
                 )
             # PyAudio expects little-endian data. Convert if necessary.
