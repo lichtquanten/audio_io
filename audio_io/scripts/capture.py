@@ -51,7 +51,7 @@ def main():
 	if sample_rate is None:
 		sample_rate = p.get_device_info_by_index(device_index)['defaultSampleRate']
 
-	pub_data = rospy.Publisher('~data', AudioData)
+	pub_data = rospy.Publisher('~data', AudioData, queue_size=10)
 
 	sample_rate = int(sample_rate)
 
