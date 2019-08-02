@@ -29,8 +29,7 @@ def main():
                 wf.setnchannels(msg.num_channels)
                 wf.setframerate(msg.sample_rate)
                 wf.setsampwidth(msg.sample_width)
-            # if msg.is_bigendian:
-            if True:
+            if msg.is_bigendian:
                 # Wave files are little-endian
                 msg.data = switch_endianness(
                     data=msg.data,
