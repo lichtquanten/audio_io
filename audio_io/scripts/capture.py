@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Working on it
+"""Captures audio from a microphone"""
 import pyaudio
 import rospy
 from sys import byteorder
@@ -27,7 +27,7 @@ def main():
 	sample_width = rospy.get_param('~sample_width', 2)
 	format = p.get_format_from_width(sample_width)
 
-	frames_per_buffer = rospy.get_param('~frames_per_buffer', 1024)
+	frames_per_buffer = rospy.get_param('~frames_per_buffer', 4096)
 	device_index = rospy.get_param('~device_index', None)
 	device_name = rospy.get_param('~device_name', None)
 
@@ -44,7 +44,7 @@ def main():
 				raise InvalidDevice('Invalid device name: %s.' % device_name)
 
 	rospy.loginfo("Using device: {}".format(
-	p.get_device_info_by_index(device_index)['name'])
+		p.get_device_info_by_index(device_index)['name'])
 	)
 
 	# Use default sample rate, if not provided
@@ -54,6 +54,20 @@ def main():
 	pub_data = rospy.Publisher('~data', AudioData, queue_size=10)
 
 	sample_rate = int(sample_rate)
+	is_bigendian = (byteorder == 'big')
+
+	def callback(in_data, frame_count, time_info, status):
+		t = rospy.Time.now()
+		msg = AudioData(
+			data=in_data,
+			sample_rate=sample_rate,
+			num_channels=num_channels,
+			sample_width=sample_width,
+			is_bigendian=is_bigendian,
+		)
+		msg.header.stamp = t
+		pub_data.publish(msg)
+		return None, pyaudio.paContinue
 
 	# Open pyaudio stream
 	stream = p.open(
@@ -63,22 +77,10 @@ def main():
 		channels=num_channels,
 		rate=sample_rate,
 		frames_per_buffer=frames_per_buffer,
-		input_device_index=device_index)
+		input_device_index=device_index,
+		stream_callback=callback)
 
-	is_bigendian = (byteorder == 'big')
-
-	while not rospy.is_shutdown():
-		data = stream.read(frames_per_buffer, exception_on_overflow=False)
-		t = rospy.Time.now()
-		msg = AudioData(
-			data=data,
-			sample_rate=sample_rate,
-			num_channels=num_channels,
-			sample_width=sample_width,
-			is_bigendian=is_bigendian,
-		)
-		msg.header.stamp = t
-		pub_data.publish(msg)
+	rospy.spin()
 
 	stream.stop_stream()
 	stream.close()

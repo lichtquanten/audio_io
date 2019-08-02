@@ -1,44 +1,43 @@
 #!/usr/bin/env python
-# Not touched
+"""Saves audio to a wave file."""
 import rospy
+from rospywrapper import TopicSource
 import wave
-from os import path
-import datetime
 
-from ros_speech2text.srv import AudioConfig
-from ros_speech2text.msg import AudioChunk
-from utilities import switch_endianness
+from audio_io_msgs.msg import AudioData
 
-# Initialize ROS node
-rospy.init_node('audio_save', anonymous = True)
-node_name = rospy.get_name()
+def switch_endianness(data, width):
+    out = [None] * len(data)
+    idx = 0
+    for i in xrange(0, len(data), width):
+        for j in xrange(width, 0, -1):
+            out[idx] = data[i + j - 1]
+            idx += 1
+    return str(bytearray(out))
 
-input_stream = rospy.get_param(node_name + '/input_stream')
-prefix = rospy.get_param(node_name + '/file_prefix', 'out')
-dir = rospy.get_param(node_name + '/output_directory', '~')
+def main():
+    input_topic = rospy.get_param('~input_topic')
+    threadsafe = rospy.get_param('~threadsafe', False)
+    dst = rospy.get_param('~dst', 'out.wav')
 
-# Get the information about the audio stream
-rospy.loginfo('Waiting for connection to input stream...')
-rospy.wait_for_service(input_stream + '/config')
-config = rospy.ServiceProxy(input_stream + '/config', AudioConfig)()
-rospy.loginfo('Connected to input stream')
+    source = TopicSource(input_topic, AudioData)
+    wf = None
+    with source:
+        for msg, t in source:
+            if not wf:
+                wf = wave.open(dst, 'wb')
+                wf.setnchannels(msg.num_channels)
+                wf.setframerate(msg.sample_rate)
+                wf.setsampwidth(msg.sample_width)
+            # if msg.is_bigendian:
+            if True:
+                # Wave files are little-endian
+                msg.data = switch_endianness(
+                    data=msg.data,
+                    width=msg.sample_width
+                )
+            wf.writeframes(msg.data)
 
-# Use audio stream info to initialize the wave file
-filename = path.join(dir, prefix + str(datetime.datetime.now()) + '.wav')
-wf = wave.open(path.join(dir, prefix + str(datetime.datetime.now()) +'.wav'), 'wb')
-wf.setnchannels(config.num_channels)
-wf.setframerate(config.sample_rate)
-wf.setsampwidth(config.sample_width)
-
-def callback(msg):
-    chunk = msg.chunk
-    if config.endianness == 'big':
-        chunk = switch_endianness(chunk, config.sample_width)
-    wf.writeframes(str(chunk))
-
-rospy.Subscriber(input_stream + '/chunk', AudioChunk, callback)
-
-rospy.spin()
-
-print "Closing wave file"
-wf.close()
+if __name__ == '__main__':
+    rospy.init_node('save', anonymous=True)
+    main()

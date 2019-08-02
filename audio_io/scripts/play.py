@@ -1,12 +1,20 @@
 #!/usr/bin/env python
 """Plays audio from a wave file."""
-# Fixed, except for switching endianness
 import pyaudio
 import rospy
 from rospywrapper import TopicSource
 import sys
 
 from audio_io_msgs.msg import AudioData
+
+def switch_endianness(data, width):
+    out = [None] * len(data)
+    idx = 0
+    for i in xrange(0, len(data), width):
+        for j in xrange(width, 0, -1):
+            out[idx] = data[i + j - 1]
+            idx += 1
+    return str(bytearray(out))
 
 def main():
     p = pyaudio.PyAudio()
@@ -44,13 +52,15 @@ def main():
                     input=False,
                     output=True
                 )
-            # PyAudio expects little-endian data. Convert if necessary.
-            # if msg.is_bigendian:
-            #     data =
-            #     msg.data = data
+            if msg.is_bigendian:
+                # PyAudio expects little-endian
+                msg.data = switch_endianness(
+                    data=msg.data,
+                    width=msg.sample_width
+                )
             stream.write(msg.data)
     p.terminate()
 
 if __name__ == '__main__':
-    rospy.init_node('audio_save', anonymous = True)
+    rospy.init_node('audio_save', anonymous=True)
     main()
