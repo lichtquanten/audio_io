@@ -27,7 +27,7 @@ def main():
 	sample_width = rospy.get_param('~sample_width', 2)
 	format = p.get_format_from_width(sample_width)
 
-	frames_per_buffer = rospy.get_param('~frames_per_buffer', 4096)
+	frames_per_buffer = rospy.get_param('~frames_per_chunk', 4096)
 	device_index = rospy.get_param('~device_index', None)
 	device_name = rospy.get_param('~device_name', None)
 
