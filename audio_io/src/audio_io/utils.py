@@ -1,3 +1,5 @@
+import numpy as np
+
 def switch_endianness(data, width):
     """
     Parameters
