@@ -20,6 +20,8 @@ def device_index_by_name(p, name):
 
 def main():
 	p = pyaudio.PyAudio()
+	for i in range(p.get_device_count()):
+		print '\tDevice #%d: %s\n' % (i, p.get_device_info_by_index(i)['name'])
 
 	# Get audio configuration
 	sample_rate = rospy.get_param('~sample_rate', None)
